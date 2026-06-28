@@ -1,0 +1,22 @@
+{
+  "product_id": "ch2_ohr_n_20260628t123045_faustini",
+  "sensor": "Orbiter High Resolution Camera (OHRC)",
+  "spacecraft": "Chandrayaan-2",
+  "observation_time": "2026-06-28T12:30:45.102Z",
+  "pixel_resolution_meters": 0.25,
+  "incident_angle_degrees": 48.25,
+  "sun_azimuth_degrees": 135.42,
+  "sun_elevation_degrees": 1.15,
+  "center_latitude": -87.180000,
+  "center_longitude": 84.310000,
+  "bounding_coordinates": {
+    "north_latitude": -87.150000,
+    "south_latitude": -87.210000,
+    "east_longitude": 84.450000,
+    "west_longitude": 84.170000
+  },
+  "calibration_factor": 1.482e-5,
+  "pds4_label_version": "1.12.0.0",
+  "file_format": "GeoTIFF",
+  "data_quality_flag": "nominal"
+}
