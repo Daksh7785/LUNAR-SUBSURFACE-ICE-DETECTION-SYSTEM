@@ -4,6 +4,24 @@ import { db } from '../config/database';
 import { cache } from '../config/redis';
 import { logger } from '../config/logger';
 
+const formatProject = (row: any) => {
+  if (!row) return null;
+  return {
+    id: row.id,
+    name: row.name,
+    description: row.description,
+    targetRegion: row.crater_name,
+    coordinates: {
+      lat: Number(row.latitude),
+      lng: Number(row.longitude)
+    },
+    createdAt: row.created_at,
+    status: row.status,
+    latitude: Number(row.latitude),
+    longitude: Number(row.longitude)
+  };
+};
+
 export const createProject = async (req: AuthenticatedRequest, res: Response, next: NextFunction): Promise<void> => {
   try {
     if (!req.user) {
@@ -20,13 +38,13 @@ export const createProject = async (req: AuthenticatedRequest, res: Response, ne
       [req.user.id, name, description, craterName, latitude, longitude]
     );
 
-    const project = insertRes.rows[0];
-    await cache.set(`project:${project.id}`, JSON.stringify(project), 3600);
+    const project = formatProject(insertRes.rows[0]);
+    await cache.set(`project:${project?.id}`, JSON.stringify(project), 3600);
 
-    logger.info('Project created successfully', { projectId: project.id, userId: req.user.id });
+    logger.info('Project created successfully', { projectId: project?.id, userId: req.user.id });
     res.status(201).json({
       message: 'Project created successfully',
-      projectId: project.id,
+      projectId: project?.id,
       project,
       data: project
     });
@@ -47,7 +65,8 @@ export const getProjects = async (req: AuthenticatedRequest, res: Response, next
       [req.user.id]
     );
 
-    res.status(200).json({ projects: projectsRes.rows, data: projectsRes.rows });
+    const formatted = projectsRes.rows.map(formatProject);
+    res.status(200).json({ projects: formatted, data: formatted });
   } catch (error) {
     next(error);
   }
@@ -63,7 +82,7 @@ export const getProjectById = async (req: AuthenticatedRequest, res: Response, n
     const { projectId } = req.params;
     const cached = await cache.get(`project:${projectId}`);
     if (cached) {
-      res.status(200).json({ project: JSON.parse(cached) });
+      res.status(200).json({ project: JSON.parse(cached), data: JSON.parse(cached) });
       return;
     }
 
@@ -77,10 +96,10 @@ export const getProjectById = async (req: AuthenticatedRequest, res: Response, n
       return;
     }
 
-    const project = projectRes.rows[0];
+    const project = formatProject(projectRes.rows[0]);
     await cache.set(`project:${projectId}`, JSON.stringify(project), 3600);
 
-    res.status(200).json({ project });
+    res.status(200).json({ project, data: project });
   } catch (error) {
     next(error);
   }
@@ -110,11 +129,11 @@ export const updateProject = async (req: AuthenticatedRequest, res: Response, ne
       return;
     }
 
-    const project = updateRes.rows[0];
+    const project = formatProject(updateRes.rows[0]);
     await cache.set(`project:${projectId}`, JSON.stringify(project), 3600);
 
     logger.info('Project updated successfully', { projectId, userId: req.user.id });
-    res.status(200).json({ message: 'Project updated successfully', project });
+    res.status(200).json({ message: 'Project updated successfully', project, data: project });
   } catch (error) {
     next(error);
   }
