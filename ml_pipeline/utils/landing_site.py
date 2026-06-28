@@ -63,3 +63,41 @@ class LandingSiteCalculator:
             site["rank"] = idx + 1
 
         return ranked_sites
+
+def rank_landing_sites(slopes, boulder_densities, ice_distances, solar_irradiances, coordinates):
+    """Standalone ranking utility for unit tests compatibility."""
+    if slopes is None or len(slopes) == 0:
+        raise ValueError("Empty input arrays")
+    if len(slopes) != len(boulder_densities) or len(slopes) != len(coordinates):
+        raise ValueError("Shape mismatch")
+
+    ranked = []
+    for i in range(len(slopes)):
+        slope = slopes[i]
+        boulder_density = boulder_densities[i]
+        dist_km = ice_distances[i]
+        solar_irr = solar_irradiances[i]
+        lat, lng = coordinates[i]
+
+        slope_score = max(0.0, 1.0 - (slope / 10.0))
+        boulder_score = max(0.0, 1.0 - (boulder_density / 0.5))
+        safety_score = 0.7 * slope_score + 0.3 * boulder_score
+        proximity_score = max(0.0, 1.0 - (dist_km / 10.0))
+        solar_score = solar_irr
+
+        combined_score = 0.45 * safety_score + 0.30 * proximity_score + 0.25 * solar_score
+
+        ranked.append({
+            "name": f"Site {i+1}",
+            "lat": lat,
+            "lng": lng,
+            "slope": slope,
+            "boulder_density": boulder_density,
+            "dist_km": dist_km,
+            "solar_irr": solar_irr,
+            "score": combined_score
+        })
+
+    ranked.sort(key=lambda x: x["score"], reverse=True)
+    return ranked
+

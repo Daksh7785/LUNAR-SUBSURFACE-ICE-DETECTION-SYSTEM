@@ -32,9 +32,10 @@ class IceDetector:
     Implements refined criteria (CPR > 1.0 and DOP < 0.13) alongside advanced machine learning
     ensembles and dielectric mixing models to calculate ice concentration and volume within the top 5 meters.
     """
-    def __init__(self):
+    def __init__(self, input_dim: int = 7):
+        self.input_dim = input_dim
         self.device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
-        self.nn_model = LunarIceNeuralNetwork(input_dim=7).to(self.device)
+        self.nn_model = LunarIceNeuralNetwork(input_dim=input_dim).to(self.device)
         self.xgb_model = xgb.XGBClassifier(n_estimators=150, max_depth=6, learning_rate=0.05)
         self._initialize_pretrained_weights()
 
@@ -58,6 +59,46 @@ class IceDetector:
         # Additional confidence given by volume scattering m-chi > 0.5 and low temp < -150C
         y_synth = ((X_synth[:, 0] > 1.0) & (X_synth[:, 1] < 0.13) & (X_synth[:, 2] > 0.5) & (X_synth[:, 4] < -150)).astype(int)
         self.xgb_model.fit(X_synth, y_synth)
+
+    def predict(self, features: np.ndarray) -> np.ndarray:
+        """Standalone prediction classification matching exact problem statement criteria."""
+        if features is None or len(features) == 0:
+            raise ValueError("Empty features array")
+        if features.shape[1] != self.input_dim:
+            raise ValueError("Feature dimension mismatch")
+        cpr = features[:, 0]
+        dop = features[:, 1]
+        exact_match = (cpr > 1.0) & (dop < 0.13)
+        return exact_match.astype(int)
+
+    def estimate_ice_volume(self, features: np.ndarray) -> tuple[float, float, float]:
+        """Subsurface ice volume estimator within top 5 meters."""
+        if features is None or len(features) == 0:
+            raise ValueError("Empty features array")
+        if features.shape[1] != self.input_dim:
+            raise ValueError("Feature dimension mismatch")
+            
+        cpr = features[:, 0]
+        dop = features[:, 1]
+        m_chi = features[:, 2]
+        
+        valid_ice = (cpr > 1.0) & (dop < 0.13)
+        num_ice_pixels = np.sum(valid_ice)
+        
+        if num_ice_pixels == 0:
+            return 0.0, 0.0, 0.0
+            
+        concentrations = np.zeros_like(cpr)
+        concentrations[valid_ice] = np.clip(0.35 + 0.35 * (cpr[valid_ice] - 1.0) + 0.25 * m_chi[valid_ice], 0.40, 0.90)
+        
+        avg_conc = float(np.mean(concentrations[valid_ice]))
+        pixel_area = 900.0 # 30m x 30m
+        depth = 5.0
+        
+        volume_m3 = float(num_ice_pixels * pixel_area * depth * avg_conc)
+        volume_km3 = volume_m3 / 1e9
+        
+        return volume_m3, volume_km3, avg_conc
 
     def predict_ice_prob(self, features: np.ndarray) -> tuple[np.ndarray, float, np.ndarray]:
         """
