@@ -272,14 +272,27 @@ ALTER TABLE ice_volume_estimates
   ADD COLUMN IF NOT EXISTS volume_km3 DECIMAL(15, 6);
 
 -- Seed initial default user
--- Password corresponds to 'password123' hashed with bcrypt
+-- Password corresponds to 'password123' hashed with SHA-256
 INSERT INTO users (id, email, password_hash, full_name, organization, role, email_verified)
 VALUES (
   'a3d9050d-df8b-4a57-b08e-17cfc1d904c1',
   'admin@isro.gov.in',
-  '$2b$10$tZ2R8k0w4z7E6g9vM2KqDuX.O8hW4dJ3f4M9A1K4oH5w8E7X9q1m2',
+  'ef92b778bafe771e89245b89ecbc08a44a4e166c06659911881f383d4473e94f',
   'ISRO Principal Scientist',
   'ISRO UR Rao Satellite Centre',
+  'admin',
+  TRUE
+) ON CONFLICT (email) DO NOTHING;
+
+-- Seed default mission control client user
+-- Password corresponds to 'isro_secure_admin_2026' hashed with SHA-256
+INSERT INTO users (id, email, password_hash, full_name, organization, role, email_verified)
+VALUES (
+  'e65d8a01-2e11-49b8-ac43-982d1cfa6bfa',
+  'mission_control@isro.gov.in',
+  '683c3314f118dbeb318ac042b26a2f73b588fb12e7dece7e6daa44bc5e4302eb',
+  'ISRO Mission Controller',
+  'ISRO Space Applications Centre',
   'admin',
   TRUE
 ) ON CONFLICT (email) DO NOTHING;
