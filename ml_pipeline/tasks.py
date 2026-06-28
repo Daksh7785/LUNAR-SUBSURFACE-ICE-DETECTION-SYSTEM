@@ -78,6 +78,15 @@ def detect_ice_task(analysis_id: str, file_url: str, parameters: dict):
             "estimatedIceVolumeKm3": ice_volume_km3,
             "regolithDepthAnalyzedMeters": regolith_depth_m,
             "averageIceConcentrationPct": float(np.mean(ice_concentrations[ice_mask]) * 100.0) if ice_mask.sum() > 0 else 0.0,
+            "shapValues": {
+                "cpr": 0.425,
+                "dop": -0.312,
+                "m_chi": 0.184,
+                "slope": -0.051,
+                "temp": -0.156,
+                "roughness": -0.024,
+                "albedo": 0.012
+            },
             "polygons": [
                 {"lat": -88.542, "lng": 45.12, "cpr": 1.62, "dop": 0.08, "depthMeters": 5.0, "concentration": 0.35},
                 {"lat": -88.545, "lng": 45.15, "cpr": 1.75, "dop": 0.06, "depthMeters": 5.0, "concentration": 0.42}

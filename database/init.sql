@@ -271,3 +271,61 @@ ALTER TABLE ice_volume_estimates
   ADD COLUMN IF NOT EXISTS depth_max_m DECIMAL(8, 2),
   ADD COLUMN IF NOT EXISTS volume_km3 DECIMAL(15, 6);
 
+-- Seed initial default user
+-- Password corresponds to 'password123' hashed with bcrypt
+INSERT INTO users (id, email, password_hash, full_name, organization, role, email_verified)
+VALUES (
+  'a3d9050d-df8b-4a57-b08e-17cfc1d904c1',
+  'admin@isro.gov.in',
+  '$2b$10$tZ2R8k0w4z7E6g9vM2KqDuX.O8hW4dJ3f4M9A1K4oH5w8E7X9q1m2',
+  'ISRO Principal Scientist',
+  'ISRO UR Rao Satellite Centre',
+  'admin',
+  TRUE
+) ON CONFLICT (email) DO NOTHING;
+
+-- Seed default target polar regions with spatial parameters
+INSERT INTO lunar_regions (id, region_name, center_lat, center_lng, diameter_km, psr_area_sqkm, est_ice_score)
+VALUES 
+  (
+    'b8a92b3a-5942-498c-8c03-51842095f4aa',
+    'Faustini Crater',
+    -87.180000,
+    84.310000,
+    39.00,
+    124.50,
+    0.8520
+  ),
+  (
+    'c2dbf11b-7a31-4e8c-901d-5510940562ff',
+    'Shackleton Crater',
+    -89.900000,
+    0.000000,
+    21.00,
+    85.20,
+    0.9125
+  ),
+  (
+    'd89e51c8-2b81-420a-85d1-124950a9b891',
+    'Shoemaker Crater',
+    -88.140000,
+    44.980000,
+    50.90,
+    198.30,
+    0.7950
+  ) ON CONFLICT DO NOTHING;
+
+-- Seed default Project referencing Faustini Crater target
+INSERT INTO projects (id, user_id, name, description, crater_name, latitude, longitude, status)
+VALUES (
+  'fa140209-64d8-410a-b31a-e82b010cfa0b',
+  'a3d9050d-df8b-4a57-b08e-17cfc1d904c1',
+  'Faustini Crater Resource Assessment',
+  'Strategic analysis of the Faustini Permanently Shadowed Region (PSR) for subsurface ice volume estimation and landing site mapping.',
+  'Faustini Crater',
+  -87.180000,
+  84.310000,
+  'in_progress'
+) ON CONFLICT DO NOTHING;
+
+
