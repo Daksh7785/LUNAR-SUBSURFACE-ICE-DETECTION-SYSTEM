@@ -67,7 +67,7 @@ export const getDatasets = async (req: AuthenticatedRequest, res: Response, next
       [projectId]
     );
 
-    res.status(200).json({ datasets: datasetsRes.rows });
+    res.status(200).json({ datasets: datasetsRes.rows, data: datasetsRes.rows });
   } catch (error) {
     next(error);
   }

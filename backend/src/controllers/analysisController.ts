@@ -75,6 +75,7 @@ export const detectIce = async (req: AuthenticatedRequest, res: Response, next: 
       analysisId: analysis.id,
       taskId,
       status: 'queued',
+      data: analysis,
     });
   } catch (error) {
     next(error);
@@ -108,7 +109,7 @@ export const getAnalysisResults = async (req: AuthenticatedRequest, res: Respons
     query += ' ORDER BY created_at DESC';
 
     const resultsRes = await db.query(query, params);
-    res.status(200).json({ analysisResults: resultsRes.rows });
+    res.status(200).json({ analysisResults: resultsRes.rows, data: resultsRes.rows });
   } catch (error) {
     next(error);
   }

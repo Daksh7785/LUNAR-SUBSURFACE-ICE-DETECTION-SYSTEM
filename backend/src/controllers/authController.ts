@@ -66,6 +66,16 @@ export const register = async (req: Request, res: Response, next: NextFunction):
         organization: user.organization,
         role: user.role,
       },
+      data: {
+        token,
+        user: {
+          id: user.id,
+          email: user.email,
+          fullName: user.full_name,
+          organization: user.organization,
+          role: user.role,
+        }
+      }
     });
   } catch (error) {
     next(error);
@@ -119,6 +129,16 @@ export const login = async (req: Request, res: Response, next: NextFunction): Pr
         organization: user.organization,
         role: user.role,
       },
+      data: {
+        token,
+        user: {
+          id: user.id,
+          email: user.email,
+          fullName: user.full_name,
+          organization: user.organization,
+          role: user.role,
+        }
+      }
     });
   } catch (error) {
     next(error);

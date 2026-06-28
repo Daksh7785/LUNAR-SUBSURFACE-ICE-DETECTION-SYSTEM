@@ -28,6 +28,7 @@ export const createProject = async (req: AuthenticatedRequest, res: Response, ne
       message: 'Project created successfully',
       projectId: project.id,
       project,
+      data: project
     });
   } catch (error) {
     next(error);
@@ -46,7 +47,7 @@ export const getProjects = async (req: AuthenticatedRequest, res: Response, next
       [req.user.id]
     );
 
-    res.status(200).json({ projects: projectsRes.rows });
+    res.status(200).json({ projects: projectsRes.rows, data: projectsRes.rows });
   } catch (error) {
     next(error);
   }
