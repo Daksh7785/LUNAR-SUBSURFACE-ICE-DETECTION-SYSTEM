@@ -6,7 +6,7 @@ import { FileUp, Database, Cpu, Compass, Loader2, Disc, ArrowRight, ShieldCheck,
 const ProjectView: React.FC = () => {
   const { projectId } = useParams<{ projectId: string }>();
   const navigate = useNavigate();
-  const { activeProject, datasets, fetchProjects, projects, setActiveProject, fetchDatasets, ingestDataset } = useProjectStore();
+  const { activeProject, datasets, fetchProjects, projects, setActiveProject, ingestDataset } = useProjectStore();
 
   const [uploading, setUploading] = useState(false);
   const [name, setName] = useState('Chandrayaan2_DFSAR_LUPEX_SouthPole_BandL.tif');
@@ -122,8 +122,8 @@ const ProjectView: React.FC = () => {
               Run hybrid neural network & XGBoost classification on polarimetric SAR decompositions (CPR, DOP, m-chi) to map ice probabilities.
             </p>
             <div className="mt-4 flex items-center gap-2">
-              <span className="text-xs bg-cyan-500/10 text-cyan-400 border border-cyan-500/20 px-2 py-1 rounded-lg font-bold">CPR > 1.0</span>
-              <span className="text-xs bg-cyan-500/10 text-cyan-400 border border-cyan-500/20 px-2 py-1 rounded-lg font-bold">DOP < 0.13</span>
+              <span className="text-xs bg-cyan-500/10 text-cyan-400 border border-cyan-500/20 px-2 py-1 rounded-lg font-bold">CPR &gt; 1.0</span>
+              <span className="text-xs bg-cyan-500/10 text-cyan-400 border border-cyan-500/20 px-2 py-1 rounded-lg font-bold">DOP &lt; 0.13</span>
               <span className="text-xs bg-cyan-500/10 text-cyan-400 border border-cyan-500/20 px-2 py-1 rounded-lg font-bold">m-chi</span>
             </div>
           </div>

@@ -13,10 +13,26 @@ const pool = new Pool({
 let isDbOffline = false;
 
 // In-memory store for offline mock data (simulates database across requests)
+const SEED_PROJECT_ID = 'fa140209-64d8-410a-b31a-e82b010cfa0b';
 const mockStore: {
+  projects: any[];
   datasets: any[];
   analyses: any[];
 } = {
+  projects: [
+    {
+      id: SEED_PROJECT_ID,
+      user_id: 'a3d9050d-df8b-4a57-b08e-17cfc1d904c1',
+      name: 'Faustini Crater Resource Assessment',
+      description: 'Strategic analysis of the Faustini Permanently Shadowed Region (PSR) for subsurface ice volume estimation.',
+      crater_name: 'Faustini Crater (South Pole)',
+      latitude: -87.180000,
+      longitude: 84.310000,
+      status: 'in_progress',
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString(),
+    }
+  ],
   datasets: [
     { id: 'd1', project_id: 'fa140209-64d8-410a-b31a-e82b010cfa0b', dataset_type: 'DFSAR', filename: 'faustini_dfsar_stokes.csv', file_url: '/uploads/faustini_dfsar_stokes.csv', file_size: 102400, status: 'completed', uploaded_at: new Date().toISOString() },
     { id: 'd2', project_id: 'fa140209-64d8-410a-b31a-e82b010cfa0b', dataset_type: 'OHRC', filename: 'faustini_ohrc.tif', file_url: '/uploads/faustini_ohrc.tif', file_size: 204800, status: 'completed', uploaded_at: new Date().toISOString() },
@@ -110,28 +126,25 @@ export const db = {
         return { rowCount: 1, rows: [{ id: crypto.randomUUID(), user_id: 'a3d9050d-df8b-4a57-b08e-17cfc1d904c1' }] };
       }
       
-      // Mock Projects Query
+      // Mock Projects Query — return from mockStore
       if (queryLower.includes('from projects')) {
-        const mockProject = {
-          id: 'fa140209-64d8-410a-b31a-e82b010cfa0b',
-          user_id: 'a3d9050d-df8b-4a57-b08e-17cfc1d904c1',
-          name: 'Faustini Crater Resource Assessment',
-          description: 'Strategic analysis of the Faustini Permanently Shadowed Region (PSR) for subsurface ice volume estimation.',
-          crater_name: 'Faustini Crater',
-          latitude: -87.180000,
-          longitude: 84.310000,
-          status: 'in_progress',
-          created_at: new Date().toISOString(),
-          updated_at: new Date().toISOString()
-        };
-        return { rowCount: 1, rows: [mockProject] };
+        const paramId = params && params[0] ? String(params[0]) : '';
+        let rows = mockStore.projects;
+        if (paramId) {
+          // Support both WHERE id=$1 AND user_id=$2 (2 params) and WHERE id=$1 (1 param)
+          rows = mockStore.projects.filter(p => !paramId || p.id === paramId);
+          // If specific ID requested and not found, return seed project as fallback
+          if (rows.length === 0) rows = mockStore.projects.slice(0, 1);
+        }
+        return { rowCount: rows.length, rows };
       }
 
-      // Mock Project Insert
+      // Mock Project Insert — persist to mockStore so analysis route can find it
       if (queryLower.includes('insert into projects')) {
         const newId = crypto.randomUUID();
         const row = {
           id: newId,
+          user_id: 'a3d9050d-df8b-4a57-b08e-17cfc1d904c1',
           name: params && params[1] ? String(params[1]) : 'New Project',
           description: params && params[2] ? String(params[2]) : '',
           crater_name: params && params[3] ? String(params[3]) : 'Shackleton',
@@ -140,6 +153,7 @@ export const db = {
           status: 'in_progress',
           created_at: new Date().toISOString(),
         };
+        mockStore.projects.push(row);
         return { rowCount: 1, rows: [row] };
       }
 

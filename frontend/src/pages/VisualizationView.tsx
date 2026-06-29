@@ -224,7 +224,7 @@ function buildCraterScene(canvas: HTMLCanvasElement) {
 
 const VisualizationView: React.FC = () => {
   const { projectId } = useParams<{ projectId: string }>();
-  const { activeProject, analyses, fetchProjects, setActiveProject, startAnalysis, fetchAnalyses } = useProjectStore();
+  const { activeProject, fetchProjects, setActiveProject, startAnalysis, fetchAnalyses } = useProjectStore();
   const canvasRef = useRef<HTMLCanvasElement>(null);
 
   const [landingSites, setLandingSites] = useState(MOCK_LANDING_SITES);

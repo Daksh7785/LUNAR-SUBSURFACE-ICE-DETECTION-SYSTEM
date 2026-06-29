@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import { useProjectStore } from '../store/projectStore';
 import { Cpu, Play, Loader2, CheckCircle2, AlertTriangle, Activity, Waves, Database, RefreshCw, ChevronDown, ChevronUp, Info } from 'lucide-react';
-import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, RadarChart, PolarGrid, PolarAngleAxis, Radar } from 'recharts';
+import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer } from 'recharts';
 
 const MOCK_DATASETS = [
   { id: 'd-mock-1', name: 'CH2_DFSAR_SP_LBand_CPR_v3.tif', type: 'DFSAR' },
@@ -12,7 +12,7 @@ const MOCK_DATASETS = [
 
 const AnalysisView: React.FC = () => {
   const { projectId } = useParams<{ projectId: string }>();
-  const { activeProject, datasets, analyses, fetchProjects, setActiveProject, startAnalysis, fetchAnalyses } = useProjectStore();
+  const { activeProject, datasets, analyses, fetchProjects, fetchAnalyses, setActiveProject, startAnalysis } = useProjectStore();
 
   const [selectedDatasetId, setSelectedDatasetId] = useState<string>('');
   const analysisType = 'ice_detection';
@@ -23,11 +23,21 @@ const AnalysisView: React.FC = () => {
   const [polling, setPolling] = useState(false);
 
   useEffect(() => {
-    if (!activeProject && projectId) {
-      fetchProjects().then(() => {
-        const matched = useProjectStore.getState().projects.find(p => p.id === projectId);
-        if (matched) setActiveProject(matched);
-      });
+    if (!projectId) return;
+    // If activeProject is wrong or missing, find/load the right project
+    if (!activeProject || activeProject.id !== projectId) {
+      const existing = useProjectStore.getState().projects.find(p => p.id === projectId);
+      if (existing) {
+        setActiveProject(existing);
+      } else {
+        fetchProjects().then(() => {
+          const matched = useProjectStore.getState().projects.find(p => p.id === projectId);
+          if (matched) setActiveProject(matched);
+        });
+      }
+    } else {
+      // Ensure datasets and analyses are loaded
+      fetchAnalyses(projectId);
     }
   }, [projectId]);
 

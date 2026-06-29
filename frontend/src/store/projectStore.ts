@@ -57,10 +57,25 @@ const getHeaders = () => ({
   Authorization: `Bearer ${useAuthStore.getState().token}`,
 });
 
+// Normalize a raw API project row (snake_case or camelCase) → Project interface
+const formatProject = (row: any): Project => ({
+  id: row.id,
+  name: row.name,
+  description: row.description || '',
+  // Backend uses crater_name; frontend may also send targetRegion
+  targetRegion: row.crater_name || row.targetRegion || row.craterName || 'Lunar South Pole',
+  coordinates: {
+    lat: row.latitude ?? row.coordinates?.lat ?? 0,
+    lng: row.longitude ?? row.coordinates?.lng ?? 0,
+  },
+  createdAt: row.created_at || row.createdAt || new Date().toISOString(),
+  status: row.status || 'in_progress',
+});
+
 // Map raw database rows (snake_case) to frontend camelCase Dataset interface
 const formatDataset = (row: any): Dataset => ({
   id: row.id,
-  projectId: row.project_id,
+  projectId: row.project_id || row.projectId,
   name: row.filename || row.name || row.dataset_type,
   type: row.dataset_type || row.type,
   fileUrl: row.file_url || row.fileUrl || '',
@@ -94,7 +109,9 @@ export const useProjectStore = create<ProjectState>((set, get) => ({
     set({ loading: true, isLoading: true, error: null });
     try {
       const res = await axios.get('/api/v1/projects', { headers: getHeaders() });
-      set({ projects: res.data.data || res.data.projects || [], loading: false, isLoading: false });
+      const raw: any[] = res.data.data || res.data.projects || [];
+      const projects = raw.map(formatProject);
+      set({ projects, loading: false, isLoading: false });
     } catch (err: any) {
       set({ error: err.response?.data?.message || 'Failed to fetch projects', loading: false, isLoading: false });
     }
@@ -119,7 +136,6 @@ export const useProjectStore = create<ProjectState>((set, get) => ({
   fetchDatasets: async (projectId) => {
     set({ loading: true, isLoading: true, error: null });
     try {
-      // Use the project-scoped route which the backend now supports
       const res = await axios.get(`/api/v1/projects/${projectId}/datasets`, { headers: getHeaders() });
       const raw = res.data.data || res.data.datasets || [];
       set({ datasets: raw.map(formatDataset), loading: false, isLoading: false });
@@ -129,14 +145,13 @@ export const useProjectStore = create<ProjectState>((set, get) => ({
   },
 
   fetchAnalyses: async (projectId) => {
-    set({ loading: true, isLoading: true, error: null });
+    // Don't show global loading for polling
     try {
-      // Use the project-scoped analysis route
       const res = await axios.get(`/api/v1/projects/${projectId}/analysis`, { headers: getHeaders() });
       const raw = res.data.data || res.data.analysisResults || [];
       set({ analyses: raw.map(formatAnalysis), loading: false, isLoading: false });
     } catch (err: any) {
-      set({ error: err.response?.data?.message || 'Failed to fetch analyses', loading: false, isLoading: false });
+      set({ loading: false, isLoading: false });
     }
   },
 
@@ -150,7 +165,8 @@ export const useProjectStore = create<ProjectState>((set, get) => ({
         latitude: data.coordinates.lat,
         longitude: data.coordinates.lng,
       }, { headers: getHeaders() });
-      const newProject = res.data.data || res.data.project;
+      const raw = res.data.data || res.data.project || res.data;
+      const newProject = formatProject(raw);
       set((state) => ({ projects: [...state.projects, newProject], loading: false, isLoading: false }));
       return newProject;
     } catch (err: any) {
@@ -160,15 +176,14 @@ export const useProjectStore = create<ProjectState>((set, get) => ({
   },
 
   startAnalysis: async (projectId, data) => {
-    set({ loading: true, isLoading: true, error: null });
+    set({ loading: false, isLoading: false, error: null });
     try {
-      // POST to the project-scoped analysis dispatcher endpoint
       const res = await axios.post(`/api/v1/projects/${projectId}/analysis`, data, { headers: getHeaders() });
       const newAnalysis = formatAnalysis(res.data.data || res.data);
-      set((state) => ({ analyses: [newAnalysis, ...state.analyses], loading: false, isLoading: false }));
+      set((state) => ({ analyses: [newAnalysis, ...state.analyses] }));
       return newAnalysis;
     } catch (err: any) {
-      set({ error: err.response?.data?.message || 'Failed to start analysis', loading: false, isLoading: false });
+      set({ error: err.response?.data?.message || 'Failed to start analysis' });
       throw err;
     }
   },
